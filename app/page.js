@@ -57,7 +57,7 @@ export default function Home(){
     <header className="site-header">
       <div className="wrap header-inner">
         <a className="home-link" href="/">⌂ Home</a>
-        <a className="admin-link" href="/admin">Admin</a>
+        
       </div>
     </header>
 
