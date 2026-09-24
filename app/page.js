@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { DEFAULT_SETTINGS, loadSiteSettings, renderWhatsappMessage } from '../lib/siteSettings';
 
@@ -27,6 +27,7 @@ export default function Home() {
   const [cart, setCart] = useState([]);
   const [active, setActive] = useState('All');
   const [slides, setSlides] = useState({});
+  const touchStartX = useRef({});
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
 
   useEffect(() => {
@@ -96,15 +97,30 @@ export default function Home() {
 
   function scrollGallery(id, count, amount) {
     const gallery = document.getElementById('gallery-' + id);
-    if (!gallery) {
-      moveSlide(id, count, amount);
-      return;
-    }
-
     const current = slides[id] || 0;
     const next = (current + amount + count) % count;
-    gallery.scrollTo({ left: next * gallery.clientWidth, behavior: 'smooth' });
+
+    if (gallery) {
+      gallery.scrollTo({ left: next * gallery.clientWidth, behavior: 'smooth' });
+    }
+
     setSlides(state => ({ ...state, [id]: next }));
+  }
+
+  function touchStart(id,event){
+    touchStartX.current[id]=event.changedTouches[0].clientX;
+  }
+
+  function touchEnd(id,count,event){
+    const start=touchStartX.current[id];
+    if(start==null)return;
+
+    const end=event.changedTouches[0].clientX;
+    const distance=end-start;
+    delete touchStartX.current[id];
+
+    if(Math.abs(distance)<35)return;
+    scrollGallery(id,count,distance<0?1:-1);
   }
 
   function toggleCart(product) {
@@ -174,7 +190,7 @@ export default function Home() {
       <section className="hero">
         <div className="wrap">
           <div className="eyebrow">Moving out sale</div>
-          <h1>Yeo’s Moving Out Sale</h1>
+          <h1>Luke’s Moving Out Sale</h1>
           <p>Good stuff, good condition, looking for a new home.</p>
         </div>
       </section>
@@ -208,12 +224,15 @@ export default function Home() {
                       id={'gallery-' + product.id}
                       className="gallery"
                       onScroll={event => handleGalleryScroll(product.id, event)}
+                      onTouchStart={event => touchStart(product.id,event)}
+                      onTouchEnd={event => touchEnd(product.id,images.length,event)}
                     >
                       {images.map((url, photoIndex) => (
                         <img
                           key={url + photoIndex}
                           src={url}
                           alt={product.name + ' photo ' + (photoIndex + 1)}
+                          draggable="false"
                         />
                       ))}
                     </div>
