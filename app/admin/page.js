@@ -199,38 +199,41 @@ export default function Admin(){
   </main>;
 
   return <main className="wrap admin">
-    <div className="top">
+    <div className="admin-header">
       <h1>Sale admin</h1>
-      <a href="/" style={{textDecoration:"none",padding:"9px 14px",borderRadius:10,background:"#202020",color:"#fff",fontWeight:700,fontSize:14}}>View shop</a>
+      <div className="admin-header-actions">
+        <a href="/" className="view-shop-btn">View shop</a>
+        <button className="passkey-btn" onClick={registerPasskey}>Set up passkey</button>
+      </div>
     </div>
 
-    <button style={{marginBottom:16,padding:"7px 10px",fontSize:12,borderRadius:8,border:"1px solid #bbb",background:"#fff",cursor:"pointer"}} onClick={registerPasskey}>Set up passkey</button>
+    <details className="card settings-card">
+      <summary className="settings-summary">WhatsApp settings</summary>
+      <div className="pad settings-body">
+        <label>WhatsApp number</label>
+        <input
+          inputMode="tel"
+          placeholder="e.g. 61485517778"
+          value={siteSettings.whatsappNumber}
+          onChange={e=>setSiteSettings({...siteSettings,whatsappNumber:e.target.value})}
+        />
+        <div className="muted settings-help">Include the country code. Spaces and + are fine.</div>
 
-    <section className="card pad settings-card">
-      <h2>WhatsApp settings</h2>
-      <label>WhatsApp number</label>
-      <input
-        inputMode="tel"
-        placeholder="e.g. 61485517778"
-        value={siteSettings.whatsappNumber}
-        onChange={e=>setSiteSettings({...siteSettings,whatsappNumber:e.target.value})}
-      />
-      <div className="muted settings-help">Include the country code. Spaces and + are fine.</div>
+        <label>Automatic message</label>
+        <textarea
+          className="message-template"
+          value={siteSettings.whatsappTemplate}
+          onChange={e=>setSiteSettings({...siteSettings,whatsappTemplate:e.target.value})}
+        />
+        <div className="muted settings-help">
+          Use {'{items}'} for the item list, {'{total}'} for the total and {'{count}'} for item count.
+        </div>
 
-      <label>Automatic message</label>
-      <textarea
-        className="message-template"
-        value={siteSettings.whatsappTemplate}
-        onChange={e=>setSiteSettings({...siteSettings,whatsappTemplate:e.target.value})}
-      />
-      <div className="muted settings-help">
-        Use {'{items}'} for the item list, {'{total}'} for the total and {'{count}'} for item count.
+        <button className="btn" onClick={saveWhatsappSettings} disabled={settingsSaving}>
+          {settingsSaving?'Saving...':'Save WhatsApp settings'}
+        </button>
       </div>
-
-      <button className="btn" onClick={saveWhatsappSettings} disabled={settingsSaving}>
-        {settingsSaving?'Saving...':'Save WhatsApp settings'}
-      </button>
-    </section>
+    </details>
 
     <section className="card pad">
       <h2>Add item</h2>
