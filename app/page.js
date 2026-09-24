@@ -29,6 +29,8 @@ export default function Home() {
   const [slides, setSlides] = useState({});
   const touchStartX = useRef({});
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const [lightbox, setLightbox] = useState(null);
+  const lightboxTouchX = useRef(null);
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem('yeo-cart') || '[]');
@@ -121,6 +123,38 @@ export default function Home() {
 
     if(Math.abs(distance)<35)return;
     scrollGallery(id,count,distance<0?1:-1);
+  }
+
+  function openLightbox(product, images, index) {
+    setLightbox({
+      productId: product.id,
+      title: product.name,
+      images,
+      index
+    });
+  }
+
+  function moveLightbox(amount) {
+    setLightbox(current => {
+      if (!current) return current;
+      const next =
+        (current.index + amount + current.images.length) %
+        current.images.length;
+      return { ...current, index: next };
+    });
+  }
+
+  function lightboxTouchStart(event) {
+    lightboxTouchX.current = event.changedTouches[0].clientX;
+  }
+
+  function lightboxTouchEnd(event) {
+    if (lightboxTouchX.current == null) return;
+    const distance =
+      event.changedTouches[0].clientX - lightboxTouchX.current;
+    lightboxTouchX.current = null;
+    if (Math.abs(distance) < 35) return;
+    moveLightbox(distance < 0 ? 1 : -1);
   }
 
   function toggleCart(product) {
@@ -233,6 +267,7 @@ export default function Home() {
                           src={url}
                           alt={product.name + ' photo ' + (photoIndex + 1)}
                           draggable="false"
+                          onClick={() => openLightbox(product, images, photoIndex)}
                         />
                       ))}
                     </div>
@@ -345,6 +380,65 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {lightbox && (
+        <div
+          className="lightbox"
+          role="dialog"
+          aria-modal="true"
+          aria-label={lightbox.title + ' photos'}
+          onClick={() => setLightbox(null)}
+          onTouchStart={lightboxTouchStart}
+          onTouchEnd={lightboxTouchEnd}
+        >
+          <button
+            className="lightbox-close"
+            aria-label="Close gallery"
+            onClick={() => setLightbox(null)}
+          >
+            ×
+          </button>
+
+          <div
+            className="lightbox-content"
+            onClick={event => event.stopPropagation()}
+          >
+            <img
+              src={lightbox.images[lightbox.index]}
+              alt={
+                lightbox.title +
+                ' photo ' +
+                (lightbox.index + 1)
+              }
+              draggable="false"
+            />
+
+            {lightbox.images.length > 1 && (
+              <>
+                <button
+                  className="lightbox-nav prev"
+                  aria-label="Previous photo"
+                  onClick={() => moveLightbox(-1)}
+                >
+                  ‹
+                </button>
+
+                <button
+                  className="lightbox-nav next"
+                  aria-label="Next photo"
+                  onClick={() => moveLightbox(1)}
+                >
+                  ›
+                </button>
+
+                <div className="lightbox-count">
+                  {lightbox.index + 1} / {lightbox.images.length}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </main>
   );
 }
