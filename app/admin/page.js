@@ -153,7 +153,7 @@ export default function Admin(){
       {photos.length>0&&<div className="selected-count">{photos.length} photo{photos.length>1?'s':''} selected</div>}
       <input placeholder="Item name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/>
       <input type="number" placeholder="Price" value={form.price} onChange={e=>setForm({...form,price:e.target.value})}/>
-      <input placeholder="Category" value={form.category} onChange={e=>setForm({...form,category:e.target.value})}/>
+      <input placeholder="Tags e.g. Kids / Furniture / Bedroom" value={form.category} onChange={e=>setForm({...form,category:e.target.value})}/>
       <textarea placeholder="Short description" value={form.description} onChange={e=>setForm({...form,description:e.target.value})}/>
       <button className="btn" onClick={add}>Publish item</button>
     </section>
@@ -224,8 +224,8 @@ export default function Admin(){
         <input value={editing.name} onChange={e=>setEditing({...editing,name:e.target.value})}/>
         <label>Price</label>
         <input type="number" value={editing.price} onChange={e=>setEditing({...editing,price:e.target.value})}/>
-        <label>Category</label>
-        <input value={editing.category} onChange={e=>setEditing({...editing,category:e.target.value})}/>
+        <label>Tags</label>
+        <input placeholder="Kids / Furniture / Bedroom" value={editing.category} onChange={e=>setEditing({...editing,category:e.target.value})}/>
         <label>Description</label>
         <textarea value={editing.description} onChange={e=>setEditing({...editing,description:e.target.value})}/>
         <div className="row">
