@@ -85,6 +85,28 @@ export default function Home() {
     });
   }
 
+  function handleGalleryScroll(id, event) {
+    const el = event.currentTarget;
+    const width = el.clientWidth || 1;
+    const index = Math.round(el.scrollLeft / width);
+    setSlides(current =>
+      current[id] === index ? current : { ...current, [id]: index }
+    );
+  }
+
+  function scrollGallery(id, count, amount) {
+    const gallery = document.getElementById('gallery-' + id);
+    if (!gallery) {
+      moveSlide(id, count, amount);
+      return;
+    }
+
+    const current = slides[id] || 0;
+    const next = (current + amount + count) % count;
+    gallery.scrollTo({ left: next * gallery.clientWidth, behavior: 'smooth' });
+    setSlides(state => ({ ...state, [id]: next }));
+  }
+
   function toggleCart(product) {
     if (product.status !== 'available') return;
 
@@ -181,11 +203,20 @@ export default function Home() {
             return (
               <article className="card" key={product.id}>
                 {images.length ? (
-                  <div className="gallery">
-                    <img
-                      src={images[index]}
-                      alt={product.name + ' photo ' + (index + 1)}
-                    />
+                  <div className="gallery-shell">
+                    <div
+                      id={'gallery-' + product.id}
+                      className="gallery"
+                      onScroll={event => handleGalleryScroll(product.id, event)}
+                    >
+                      {images.map((url, photoIndex) => (
+                        <img
+                          key={url + photoIndex}
+                          src={url}
+                          alt={product.name + ' photo ' + (photoIndex + 1)}
+                        />
+                      ))}
+                    </div>
 
                     {images.length > 1 && (
                       <>
@@ -193,7 +224,7 @@ export default function Home() {
                           className="gallery-btn prev"
                           aria-label="Previous photo"
                           onClick={() =>
-                            moveSlide(product.id, images.length, -1)
+                            scrollGallery(product.id, images.length, -1)
                           }
                         >
                           ‹
@@ -203,7 +234,7 @@ export default function Home() {
                           className="gallery-btn next"
                           aria-label="Next photo"
                           onClick={() =>
-                            moveSlide(product.id, images.length, 1)
+                            scrollGallery(product.id, images.length, 1)
                           }
                         >
                           ›
