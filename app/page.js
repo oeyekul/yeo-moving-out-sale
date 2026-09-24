@@ -2,8 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
-
-const WA = '61485517778';
+import { DEFAULT_SETTINGS, loadSiteSettings, renderWhatsappMessage } from '../lib/siteSettings';
 
 function imagesFor(value) {
   if (!value) return [];
@@ -28,6 +27,7 @@ export default function Home() {
   const [cart, setCart] = useState([]);
   const [active, setActive] = useState('All');
   const [slides, setSlides] = useState({});
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem('yeo-cart') || '[]');
@@ -47,6 +47,8 @@ export default function Home() {
       .order('created_at', { ascending: false });
 
     setItems(data || []);
+    const currentSettings=await loadSiteSettings(supabase());
+    setSettings(currentSettings);
   }
 
   const tabs = useMemo(() => {
@@ -118,30 +120,22 @@ export default function Home() {
       return;
     }
 
-    let msg = "Hi! I’m interested in these items from Yeo’s Moving Out Sale:\n\n";
-
-    live.forEach((product, i) => {
-      msg +=
-        (i + 1) +
-        '. ' +
-        product.name +
-        ' — $' +
-        Number(product.price).toFixed(0) +
-        '\n';
-    });
-
     const liveTotal = live.reduce(
       (sum, product) => sum + Number(product.price),
       0
     );
 
-    msg +=
-      '\nTotal: $' +
-      liveTotal.toFixed(0) +
-      '\n\nAre these still available?';
+    const msg=renderWhatsappMessage(
+      settings.whatsappTemplate,
+      live,
+      liveTotal
+    );
 
     window.location.href =
-      'https://wa.me/' + WA + '?text=' + encodeURIComponent(msg);
+      'https://wa.me/' +
+      settings.whatsappNumber +
+      '?text=' +
+      encodeURIComponent(msg);
   }
 
   return (
