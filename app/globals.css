@@ -57,3 +57,24 @@ a{color:inherit;text-decoration:none}
   .cart{flex-direction:column;align-items:stretch}
   .whatsapp{width:100%}
 }
+.admin-tools{margin:22px 0 4px}
+.admin-search{margin:0 0 10px!important;background:#fff}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.filter{border:1px solid #ccc;background:#fff;border-radius:999px;padding:8px 12px;cursor:pointer;font-weight:700}
+.filter.active{background:#202020;color:#fff;border-color:#202020}
+.admin-card-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.status-badge{font-size:11px;font-weight:800;text-transform:uppercase;padding:6px 8px;border-radius:999px;background:#eee}
+.status-badge.available{background:#e9f8ee}
+.status-badge.reserved{background:#fff1cb}
+.status-badge.sold{background:#eee}
+.edit-btn,.secondary-btn,.delete-btn{width:100%;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer;background:#fff;border:1px solid #bbb}
+.edit-btn{margin:12px 0 10px}
+.status-actions button{padding:9px 6px;border-radius:8px;border:1px solid #ccc;background:#f7f7f7;cursor:pointer}
+.secondary-btn{margin-top:8px}
+.delete-btn{margin-top:8px;color:#9b1c1c;border-color:#e2bcbc}
+.modal-backdrop{position:fixed;inset:0;background:#0008;display:flex;align-items:center;justify-content:center;padding:18px;z-index:30}
+.edit-modal{width:min(520px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:18px;padding:20px;box-shadow:0 20px 70px #0004}
+.edit-modal h2{margin:0 0 12px}
+.edit-modal label{display:block;font-size:13px;font-weight:700;margin-top:6px}
+.edit-preview{width:100%;max-height:220px;object-fit:cover;border-radius:12px;margin-bottom:10px}
+.close-btn{border:0;background:#eee;border-radius:999px;width:34px;height:34px;font-size:22px;cursor:pointer}
