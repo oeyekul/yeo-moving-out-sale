@@ -85,11 +85,14 @@ export default function Home() {
     });
   }
 
-  function add(product) {
-    if (
-      product.status === 'available' &&
-      !cart.some(item => item.id === product.id)
-    ) {
+  function toggleCart(product) {
+    if (product.status !== 'available') return;
+
+    const inCart = cart.some(item => item.id === product.id);
+
+    if (inCart) {
+      setCart(cart.filter(item => item.id !== product.id));
+    } else {
       setCart([...cart, product]);
     }
   }
@@ -241,14 +244,18 @@ export default function Home() {
                   <p className="description">{product.description}</p>
 
                   <button
-                    className="btn"
+                    className={
+                      cart.some(item => item.id === product.id)
+                        ? 'btn in-cart'
+                        : 'btn'
+                    }
                     disabled={product.status !== 'available'}
-                    onClick={() => add(product)}
+                    onClick={() => toggleCart(product)}
                   >
                     {product.status === 'reserved'
                       ? 'Reserved'
                       : cart.some(item => item.id === product.id)
-                        ? 'Added to cart'
+                        ? 'Added to cart ✓'
                         : 'Add to cart'}
                   </button>
                 </div>
