@@ -10,6 +10,8 @@ export default function Admin(){
   const[items,setItems]=useState([]);
   const[form,setForm]=useState({name:'',price:'',category:'Furniture',description:''});
   const[photo,setPhoto]=useState(null);
+  const[email,setEmail]=useState(ADMIN);
+  const[password,setPassword]=useState('');
 
   useEffect(()=>{
     if(window.location.hostname!=='yeo-moving-out-sale.vercel.app' && window.location.hostname.endsWith('.vercel.app')){
@@ -32,9 +34,9 @@ export default function Admin(){
     alert(error?error.message:'Passkey saved. Next time you can use Face ID / Touch ID.');
   }
 
-  async function login(){
-    const{error}=await supabase().auth.signInWithOtp({email:ADMIN,options:{emailRedirectTo:CANONICAL+'/admin'}});
-    alert(error?error.message:'Check your email for the sign-in link.');
+  async function passwordLogin(){
+    const{error}=await supabase().auth.signInWithPassword({email,password});
+    if(error) alert(error.message);
   }
 
   async function load(){
@@ -69,8 +71,13 @@ export default function Admin(){
 
   if(!session)return <main className="wrap admin">
     <h1>Owner login</h1>
-    <p>Sign in with {ADMIN}. No password needed.</p>
-    <button className="btn" onClick={passkeyLogin}>Use passkey / Face ID</button><button className="btn" style={{marginTop:10,background:"#666"}} onClick={login}>Email me a sign-in link</button>
+    <p>Sign in to manage the sale.</p>
+    <button className="btn" onClick={passkeyLogin}>Use passkey / Face ID</button>
+    <div style={{marginTop:16}}>
+      <input type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)}/>
+      <input type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)}/>
+      <button className="btn" onClick={passwordLogin}>Sign in with email + password</button>
+    </div>
   </main>;
 
   return <main className="wrap admin">
