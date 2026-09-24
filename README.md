@@ -9,3 +9,5 @@ Mobile-first moving-out sale catalogue with owner admin, photo uploads, status c
 Deploy on Vercel and add those two variables.
 
 Owner login is restricted by Supabase RLS to Oeyekul@live.com. Sold items stay in admin history but are hidden from the public catalogue.
+
+Deployment connected to Vercel.
