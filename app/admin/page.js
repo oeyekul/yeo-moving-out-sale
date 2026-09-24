@@ -18,6 +18,24 @@ function storeImages(images){
   return images.length===1?images[0]:JSON.stringify(images);
 }
 
+function tagsFor(value){
+  return [...new Set(
+    (value||'')
+      .split(/[\\/,;|]+/)
+      .map(tag=>tag.trim())
+      .filter(Boolean)
+  )];
+}
+
+function toggleTag(value,tag){
+  const current=tagsFor(value);
+  const exists=current.some(item=>item.toLowerCase()===tag.toLowerCase());
+  const next=exists
+    ?current.filter(item=>item.toLowerCase()!==tag.toLowerCase())
+    :[...current,tag];
+  return next.join(' / ');
+}
+
 export default function Admin(){
   const[session,setSession]=useState(null);
   const[items,setItems]=useState([]);
@@ -122,6 +140,17 @@ export default function Admin(){
     load();
   }
 
+  const allTags=useMemo(()=>{
+    const seen=new Map();
+    items.forEach(product=>{
+      tagsFor(product.category).forEach(tag=>{
+        const key=tag.toLowerCase();
+        if(!seen.has(key))seen.set(key,tag);
+      });
+    });
+    return Array.from(seen.values()).sort((a,b)=>a.localeCompare(b));
+  },[items]);
+
   const filtered=useMemo(()=>{
     const q=search.trim().toLowerCase();
     return items.filter(product=>{
@@ -153,7 +182,19 @@ export default function Admin(){
       {photos.length>0&&<div className="selected-count">{photos.length} photo{photos.length>1?'s':''} selected</div>}
       <input placeholder="Item name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/>
       <input type="number" placeholder="Price" value={form.price} onChange={e=>setForm({...form,price:e.target.value})}/>
-      <input placeholder="Tags e.g. Kids / Furniture / Bedroom" value={form.category} onChange={e=>setForm({...form,category:e.target.value})}/>
+      <label>Tags</label>
+      {allTags.length>0&&<div className="tag-picker">
+        {allTags.map(tag=>{
+          const selected=tagsFor(form.category).some(item=>item.toLowerCase()===tag.toLowerCase());
+          return <button
+            type="button"
+            key={tag}
+            className={selected?'tag-choice selected':'tag-choice'}
+            onClick={()=>setForm({...form,category:toggleTag(form.category,tag)})}
+          >{tag}</button>;
+        })}
+      </div>}
+      <input placeholder="Add or type tags e.g. Kids / Furniture / Bedroom" value={form.category} onChange={e=>setForm({...form,category:e.target.value})}/>
       <textarea placeholder="Short description" value={form.description} onChange={e=>setForm({...form,description:e.target.value})}/>
       <button className="btn" onClick={add}>Publish item</button>
     </section>
@@ -225,7 +266,18 @@ export default function Admin(){
         <label>Price</label>
         <input type="number" value={editing.price} onChange={e=>setEditing({...editing,price:e.target.value})}/>
         <label>Tags</label>
-        <input placeholder="Kids / Furniture / Bedroom" value={editing.category} onChange={e=>setEditing({...editing,category:e.target.value})}/>
+        {allTags.length>0&&<div className="tag-picker">
+          {allTags.map(tag=>{
+            const selected=tagsFor(editing.category).some(item=>item.toLowerCase()===tag.toLowerCase());
+            return <button
+              type="button"
+              key={tag}
+              className={selected?'tag-choice selected':'tag-choice'}
+              onClick={()=>setEditing({...editing,category:toggleTag(editing.category,tag)})}
+            >{tag}</button>;
+          })}
+        </div>}
+        <input placeholder="Add or type tags e.g. Kids / Furniture / Bedroom" value={editing.category} onChange={e=>setEditing({...editing,category:e.target.value})}/>
         <label>Description</label>
         <textarea value={editing.description} onChange={e=>setEditing({...editing,description:e.target.value})}/>
         <div className="row">
