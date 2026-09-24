@@ -4,15 +4,29 @@ import{supabase}from'../../lib/supabase';
 
 const ADMIN='oeyekul@live.com';
 
+function imagesFor(value){
+  if(!value)return[];
+  try{
+    const parsed=JSON.parse(value);
+    if(Array.isArray(parsed))return parsed.filter(Boolean);
+  }catch{}
+  return[value];
+}
+
+function storeImages(images){
+  if(!images?.length)return null;
+  return images.length===1?images[0]:JSON.stringify(images);
+}
+
 export default function Admin(){
   const[session,setSession]=useState(null);
   const[items,setItems]=useState([]);
   const[form,setForm]=useState({name:'',price:'',category:'Furniture',description:''});
-  const[photo,setPhoto]=useState(null);
+  const[photos,setPhotos]=useState([]);
   const[statusFilter,setStatusFilter]=useState('all');
   const[search,setSearch]=useState('');
   const[editing,setEditing]=useState(null);
-  const[editPhoto,setEditPhoto]=useState(null);
+  const[editPhotos,setEditPhotos]=useState([]);
 
   useEffect(()=>{
     const db=supabase();
@@ -41,21 +55,24 @@ export default function Admin(){
     setItems(data||[]);
   }
 
-  async function uploadPhoto(file){
-    if(!file)return null;
-    const path=Date.now()+'-'+file.name.replace(/[^a-zA-Z0-9._-]/g,'');
-    const{error}=await supabase().storage.from('item-images').upload(path,file);
-    if(error){alert(error.message);return null;}
-    return supabase().storage.from('item-images').getPublicUrl(path).data.publicUrl;
+  async function uploadPhotos(files){
+    const urls=[];
+    for(const file of files){
+      const path=Date.now()+'-'+Math.random().toString(36).slice(2)+'-'+file.name.replace(/[^a-zA-Z0-9._-]/g,'');
+      const{error}=await supabase().storage.from('item-images').upload(path,file);
+      if(error){alert(error.message);continue;}
+      urls.push(supabase().storage.from('item-images').getPublicUrl(path).data.publicUrl);
+    }
+    return urls;
   }
 
   async function add(){
     if(!form.name||!form.price)return;
-    const image_url=await uploadPhoto(photo);
-    const{error}=await supabase().from('items').insert({...form,price:Number(form.price),status:'available',image_url});
+    const uploaded=await uploadPhotos(photos);
+    const{error}=await supabase().from('items').insert({...form,price:Number(form.price),status:'available',image_url:storeImages(uploaded)});
     if(error){alert(error.message);return;}
     setForm({name:'',price:'',category:'Furniture',description:''});
-    setPhoto(null);
+    setPhotos([]);
     load();
   }
 
@@ -72,28 +89,29 @@ export default function Admin(){
       price:String(product.price??''),
       category:product.category||'',
       description:product.description||'',
-      image_url:product.image_url||''
+      images:imagesFor(product.image_url)
     });
-    setEditPhoto(null);
+    setEditPhotos([]);
+  }
+
+  function removeExistingPhoto(index){
+    setEditing(current=>({...current,images:current.images.filter((_,i)=>i!==index)}));
   }
 
   async function saveEdit(){
     if(!editing?.name||!editing?.price)return;
-    let image_url=editing.image_url||null;
-    if(editPhoto){
-      const uploaded=await uploadPhoto(editPhoto);
-      if(uploaded)image_url=uploaded;
-    }
+    const uploaded=await uploadPhotos(editPhotos);
+    const allImages=[...editing.images,...uploaded];
     const{error}=await supabase().from('items').update({
       name:editing.name,
       price:Number(editing.price),
       category:editing.category,
       description:editing.description,
-      image_url
+      image_url:storeImages(allImages)
     }).eq('id',editing.id);
     if(error){alert(error.message);return;}
     setEditing(null);
-    setEditPhoto(null);
+    setEditPhotos([]);
     load();
   }
 
@@ -130,7 +148,9 @@ export default function Admin(){
 
     <section className="card pad">
       <h2>Add item</h2>
-      <input type="file" accept="image/*" capture="environment" onChange={e=>setPhoto(e.target.files?.[0]||null)}/>
+      <label>Photos</label>
+      <input type="file" accept="image/*" multiple onChange={e=>setPhotos(Array.from(e.target.files||[]))}/>
+      {photos.length>0&&<div className="selected-count">{photos.length} photo{photos.length>1?'s':''} selected</div>}
       <input placeholder="Item name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/>
       <input type="number" placeholder="Price" value={form.price} onChange={e=>setForm({...form,price:e.target.value})}/>
       <input placeholder="Category" value={form.category} onChange={e=>setForm({...form,category:e.target.value})}/>
@@ -151,29 +171,33 @@ export default function Admin(){
     </section>
 
     <div className="grid">
-      {filtered.map(product=><div className="card" key={product.id}>
-        {product.image_url&&<img src={product.image_url} alt={product.name}/>}
-        <div className="pad">
-          <div className="admin-card-head">
-            <div>
-              <b>{product.name}</b>
-              <p className="muted" style={{margin:'5px 0'}}>{'$'+Number(product.price).toFixed(0)} · {product.category}</p>
+      {filtered.map(product=>{
+        const images=imagesFor(product.image_url);
+        return <div className="card" key={product.id}>
+          {images[0]&&<img src={images[0]} alt={product.name}/>}
+          <div className="pad">
+            <div className="admin-card-head">
+              <div>
+                <b>{product.name}</b>
+                <p className="muted" style={{margin:'5px 0'}}>{'$'+Number(product.price).toFixed(0)} · {product.category}</p>
+                {images.length>1&&<small>{images.length} photos</small>}
+              </div>
+              <span className={'status-badge '+product.status}>{product.status}</span>
             </div>
-            <span className={'status-badge '+product.status}>{product.status}</span>
+
+            <button className="edit-btn" onClick={()=>beginEdit(product)}>Edit item</button>
+
+            <div className="row status-actions">
+              <button onClick={()=>status(product.id,'available')}>Available</button>
+              <button onClick={()=>status(product.id,'reserved')}>Reserved</button>
+              <button onClick={()=>status(product.id,'sold')}>Sold</button>
+            </div>
+
+            {product.status==='sold'&&<button className="secondary-btn" onClick={()=>status(product.id,'available')}>Restore to Available</button>}
+            <button className="delete-btn" onClick={()=>erase(product.id)}>Delete</button>
           </div>
-
-          <button className="edit-btn" onClick={()=>beginEdit(product)}>Edit item</button>
-
-          <div className="row status-actions">
-            <button onClick={()=>status(product.id,'available')}>Available</button>
-            <button onClick={()=>status(product.id,'reserved')}>Reserved</button>
-            <button onClick={()=>status(product.id,'sold')}>Sold</button>
-          </div>
-
-          {product.status==='sold'&&<button className="secondary-btn" onClick={()=>status(product.id,'available')}>Restore to Available</button>}
-          <button className="delete-btn" onClick={()=>erase(product.id)}>Delete</button>
-        </div>
-      </div>)}
+        </div>;
+      })}
     </div>
 
     {!filtered.length&&<div className="empty">No items match this filter.</div>}
@@ -184,9 +208,18 @@ export default function Admin(){
           <h2>Edit item</h2>
           <button className="close-btn" onClick={()=>setEditing(null)}>×</button>
         </div>
-        {editing.image_url&&<img className="edit-preview" src={editing.image_url} alt="Current item"/>}
-        <label>Replace photo</label>
-        <input type="file" accept="image/*" onChange={e=>setEditPhoto(e.target.files?.[0]||null)}/>
+
+        {editing.images.length>0&&<div className="edit-gallery">
+          {editing.images.map((url,index)=><div className="edit-thumb" key={url+index}>
+            <img src={url} alt={'Item photo '+(index+1)}/>
+            <button onClick={()=>removeExistingPhoto(index)}>×</button>
+          </div>)}
+        </div>}
+
+        <label>Add more photos</label>
+        <input type="file" accept="image/*" multiple onChange={e=>setEditPhotos(Array.from(e.target.files||[]))}/>
+        {editPhotos.length>0&&<div className="selected-count">{editPhotos.length} new photo{editPhotos.length>1?'s':''} selected</div>}
+
         <label>Item name</label>
         <input value={editing.name} onChange={e=>setEditing({...editing,name:e.target.value})}/>
         <label>Price</label>
