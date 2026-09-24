@@ -81,7 +81,7 @@ export default function Admin(){
   </main>;
 
   return <main className="wrap admin">
-    <div className="top"><h1>Sale admin</h1><a href="/">View shop</a></div><button style={{marginBottom:16,padding:"7px 10px",fontSize:12,borderRadius:8,border:"1px solid #bbb",background:"#fff",cursor:"pointer"}} onClick={registerPasskey}>Set up passkey</button>
+    <div className="top"><h1>Sale admin</h1><a href="/" style={{textDecoration:"none",padding:"9px 14px",borderRadius:10,background:"#202020",color:"#fff",fontWeight:700,fontSize:14}}>View shop</a></div><button style={{marginBottom:16,padding:"7px 10px",fontSize:12,borderRadius:8,border:"1px solid #bbb",background:"#fff",cursor:"pointer"}} onClick={registerPasskey}>Set up passkey</button>
 
     <section className="card pad">
       <h2>Add item</h2>
