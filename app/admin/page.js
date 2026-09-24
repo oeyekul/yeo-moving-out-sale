@@ -1,6 +1,7 @@
 'use client';
 import{useEffect,useMemo,useState}from'react';
 import{supabase}from'../../lib/supabase';
+import{DEFAULT_SETTINGS,loadSiteSettings,saveSiteSettings,normalizeWhatsappNumber}from'../../lib/siteSettings';
 
 const ADMIN='oeyekul@live.com';
 
@@ -45,6 +46,8 @@ export default function Admin(){
   const[search,setSearch]=useState('');
   const[editing,setEditing]=useState(null);
   const[editPhotos,setEditPhotos]=useState([]);
+  const[siteSettings,setSiteSettings]=useState(DEFAULT_SETTINGS);
+  const[settingsSaving,setSettingsSaving]=useState(false);
 
   useEffect(()=>{
     const db=supabase();
@@ -69,8 +72,36 @@ export default function Admin(){
   }
 
   async function load(){
-    const{data}=await supabase().from('items').select('*').order('created_at',{ascending:false});
+    const db=supabase();
+    const [{data},currentSettings]=await Promise.all([
+      db.from('items').select('*').order('created_at',{ascending:false}),
+      loadSiteSettings(db)
+    ]);
     setItems(data||[]);
+    setSiteSettings(currentSettings);
+  }
+
+  async function saveWhatsappSettings(){
+    const cleaned=normalizeWhatsappNumber(siteSettings.whatsappNumber);
+    if(!cleaned){
+      alert('Enter a WhatsApp number including country code.');
+      return;
+    }
+
+    setSettingsSaving(true);
+    const{error,settings}=await saveSiteSettings(supabase(),{
+      ...siteSettings,
+      whatsappNumber:cleaned
+    });
+    setSettingsSaving(false);
+
+    if(error){
+      alert(error.message);
+      return;
+    }
+
+    setSiteSettings(settings);
+    alert('WhatsApp settings saved.');
   }
 
   async function uploadPhotos(files){
@@ -174,6 +205,32 @@ export default function Admin(){
     </div>
 
     <button style={{marginBottom:16,padding:"7px 10px",fontSize:12,borderRadius:8,border:"1px solid #bbb",background:"#fff",cursor:"pointer"}} onClick={registerPasskey}>Set up passkey</button>
+
+    <section className="card pad settings-card">
+      <h2>WhatsApp settings</h2>
+      <label>WhatsApp number</label>
+      <input
+        inputMode="tel"
+        placeholder="e.g. 61485517778"
+        value={siteSettings.whatsappNumber}
+        onChange={e=>setSiteSettings({...siteSettings,whatsappNumber:e.target.value})}
+      />
+      <div className="muted settings-help">Include the country code. Spaces and + are fine.</div>
+
+      <label>Automatic message</label>
+      <textarea
+        className="message-template"
+        value={siteSettings.whatsappTemplate}
+        onChange={e=>setSiteSettings({...siteSettings,whatsappTemplate:e.target.value})}
+      />
+      <div className="muted settings-help">
+        Use {'{items}'} for the item list, {'{total}'} for the total and {'{count}'} for item count.
+      </div>
+
+      <button className="btn" onClick={saveWhatsappSettings} disabled={settingsSaving}>
+        {settingsSaving?'Saving...':'Save WhatsApp settings'}
+      </button>
+    </section>
 
     <section className="card pad">
       <h2>Add item</h2>
