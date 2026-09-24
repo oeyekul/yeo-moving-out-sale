@@ -3,6 +3,7 @@ import{useEffect,useState}from'react';
 import{supabase}from'../../lib/supabase';
 
 const ADMIN='oeyekul@live.com';
+const CANONICAL='https://yeo-moving-out-sale.vercel.app';
 
 export default function Admin(){
   const[session,setSession]=useState(null);
@@ -11,6 +12,10 @@ export default function Admin(){
   const[photo,setPhoto]=useState(null);
 
   useEffect(()=>{
+    if(window.location.hostname!=='yeo-moving-out-sale.vercel.app' && window.location.hostname.endsWith('.vercel.app')){
+      window.location.replace(CANONICAL+'/admin');
+      return;
+    }
     const db=supabase();
     db.auth.getSession().then(({data})=>{setSession(data.session);if(data.session)load();});
     const{data}=db.auth.onAuthStateChange((event,s)=>{setSession(s);if(s)load();});
@@ -28,7 +33,7 @@ export default function Admin(){
   }
 
   async function login(){
-    const{error}=await supabase().auth.signInWithOtp({email:ADMIN,options:{emailRedirectTo:window.location.origin+'/admin'}});
+    const{error}=await supabase().auth.signInWithOtp({email:ADMIN,options:{emailRedirectTo:CANONICAL+'/admin'}});
     alert(error?error.message:'Check your email for the sign-in link.');
   }
 
