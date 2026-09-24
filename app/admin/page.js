@@ -17,6 +17,16 @@ export default function Admin(){
     return()=>data.subscription.unsubscribe();
   },[]);
 
+  async function passkeyLogin(){
+    const{error}=await supabase().auth.signInWithPasskey();
+    if(error) alert(error.message);
+  }
+
+  async function registerPasskey(){
+    const{error}=await supabase().auth.registerPasskey();
+    alert(error?error.message:'Passkey saved. Next time you can use Face ID / Touch ID.');
+  }
+
   async function login(){
     const{error}=await supabase().auth.signInWithOtp({email:ADMIN,options:{emailRedirectTo:window.location.origin+'/admin'}});
     alert(error?error.message:'Check your email for the sign-in link.');
@@ -55,11 +65,11 @@ export default function Admin(){
   if(!session)return <main className="wrap admin">
     <h1>Owner login</h1>
     <p>Sign in with {ADMIN}. No password needed.</p>
-    <button className="btn" onClick={login}>Email me a sign-in link</button>
+    <button className="btn" onClick={passkeyLogin}>Use passkey / Face ID</button><button className="btn" style={{marginTop:10,background:"#666"}} onClick={login}>Email me a sign-in link</button>
   </main>;
 
   return <main className="wrap admin">
-    <div className="top"><h1>Sale admin</h1><a href="/">View shop</a></div>
+    <div className="top"><h1>Sale admin</h1><a href="/">View shop</a></div><button className="btn" style={{marginBottom:16}} onClick={registerPasskey}>Set up passkey on this device</button>
 
     <section className="card pad">
       <h2>Add item</h2>
