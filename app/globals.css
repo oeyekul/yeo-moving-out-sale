@@ -29,8 +29,8 @@ a{color:inherit;text-decoration:none}
 .card-top{display:flex;justify-content:space-between;align-items:center;gap:14px}
 .pill{display:inline-block;padding:7px 11px;border-radius:999px;background:var(--soft);font-size:12px;font-weight:800}
 .price{font-size:24px;font-weight:900}
-.card h2{font-size:24px;line-height:1.15;margin:16px 0 10px}
-.description{color:#666;line-height:1.5;min-height:48px}
+.card h2{font-size:22px;line-height:1.15;margin:16px 0 10px}
+.description{color:#666;line-height:1.5;min-height:48px;font-size:14px}
 .btn{border:0;border-radius:14px;padding:14px 16px;font-weight:800;cursor:pointer;background:var(--ink);color:#fff;width:100%;font-size:15px}
 .btn:disabled{opacity:.45}
 
@@ -53,7 +53,7 @@ a{color:inherit;text-decoration:none}
   .hero h1{font-size:34px}
   .hero p{font-size:16px}
   .grid{grid-template-columns:1fr;gap:16px}
-  .card h2{font-size:22px}
+  .card h2{font-size:20px}
   .cart{flex-direction:column;align-items:stretch}
   .whatsapp{width:100%}
 }
@@ -115,3 +115,5 @@ a{color:inherit;text-decoration:none}
 .settings-card[open] .settings-summary::after{transform:rotate(180deg)}
 .settings-card[open] .settings-summary{border-bottom:1px solid var(--line)}
 .settings-body{padding-top:16px}
+
+.btn.in-cart{background:#5e5e5e}
