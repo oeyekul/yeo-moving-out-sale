@@ -5,10 +5,20 @@ import{supabase}from'../lib/supabase';
 const WA='61485517778';
 const tabs=['All','Furniture','Electronics','Kids','Home'];
 
+function imagesFor(value){
+  if(!value)return[];
+  try{
+    const parsed=JSON.parse(value);
+    if(Array.isArray(parsed))return parsed.filter(Boolean);
+  }catch{}
+  return[value];
+}
+
 export default function Home(){
   const[items,setItems]=useState([]);
   const[cart,setCart]=useState([]);
   const[active,setActive]=useState('All');
+  const[slides,setSlides]=useState({});
 
   useEffect(()=>{
     const saved=JSON.parse(localStorage.getItem('yeo-cart')||'[]');
@@ -29,6 +39,13 @@ export default function Home(){
     if(active==='All')return items;
     return items.filter(product=>(product.category||'').toLowerCase().includes(active.toLowerCase()));
   },[items,active]);
+
+  function moveSlide(id,count,amount){
+    setSlides(current=>{
+      const now=current[id]||0;
+      return{...current,[id]:(now+amount+count)%count};
+    });
+  }
 
   function add(product){
     if(product.status==='available'&&!cart.some(c=>c.id===product.id)) setCart([...cart,product]);
@@ -57,7 +74,6 @@ export default function Home(){
     <header className="site-header">
       <div className="wrap header-inner">
         <a className="home-link" href="/">⌂ Home</a>
-        
       </div>
     </header>
 
@@ -75,22 +91,33 @@ export default function Home(){
       </nav>
 
       <div className="grid">
-        {filtered.map(product=><article className="card" key={product.id}>
-          {product.image_url
-            ?<img src={product.image_url} alt={product.name}/>
-            :<div className="image-placeholder">Photo coming soon</div>}
-          <div className="pad">
-            <div className="card-top">
-              <span className="pill">{product.status==='reserved'?'Reserved':product.category}</span>
-              <span className="price">{'$'+Number(product.price).toFixed(0)}</span>
+        {filtered.map(product=>{
+          const images=imagesFor(product.image_url);
+          const index=Math.min(slides[product.id]||0,Math.max(images.length-1,0));
+          return <article className="card" key={product.id}>
+            {images.length
+              ?<div className="gallery">
+                <img src={images[index]} alt={product.name+' photo '+(index+1)}/>
+                {images.length>1&&<>
+                  <button className="gallery-btn prev" aria-label="Previous photo" onClick={()=>moveSlide(product.id,images.length,-1)}>‹</button>
+                  <button className="gallery-btn next" aria-label="Next photo" onClick={()=>moveSlide(product.id,images.length,1)}>›</button>
+                  <div className="gallery-count">{index+1} / {images.length}</div>
+                </>}
+              </div>
+              :<div className="image-placeholder">Photo coming soon</div>}
+            <div className="pad">
+              <div className="card-top">
+                <span className="pill">{product.status==='reserved'?'Reserved':product.category}</span>
+                <span className="price">{'$'+Number(product.price).toFixed(0)}</span>
+              </div>
+              <h2>{product.name}</h2>
+              <p className="description">{product.description}</p>
+              <button className="btn" disabled={product.status!=='available'} onClick={()=>add(product)}>
+                {product.status==='reserved'?'Reserved':cart.some(c=>c.id===product.id)?'Added to cart':'Add to cart'}
+              </button>
             </div>
-            <h2>{product.name}</h2>
-            <p className="description">{product.description}</p>
-            <button className="btn" disabled={product.status!=='available'} onClick={()=>add(product)}>
-              {product.status==='reserved'?'Reserved':cart.some(c=>c.id===product.id)?'Added to cart':'Add to cart'}
-            </button>
-          </div>
-        </article>)}
+          </article>;
+        })}
       </div>
 
       {!filtered.length&&<div className="empty">
