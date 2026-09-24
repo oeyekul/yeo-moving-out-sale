@@ -3,8 +3,6 @@ import{useEffect,useMemo,useState}from'react';
 import{supabase}from'../lib/supabase';
 
 const WA='61485517778';
-const tabs=['All','Furniture','Electronics','Kids','Home'];
-
 function imagesFor(value){
   if(!value)return[];
   try{
@@ -12,6 +10,10 @@ function imagesFor(value){
     if(Array.isArray(parsed))return parsed.filter(Boolean);
   }catch{}
   return[value];
+}
+
+function tagsFor(value){
+  return [...new Set((value||'').split(/[\\/,;|]+/).map(tag=>tag.trim()).filter(Boolean))];
 }
 
 export default function Home(){
@@ -35,9 +37,24 @@ export default function Home(){
     setItems(data||[]);
   }
 
+  const tabs=useMemo(()=>{
+    const seen=new Map();
+    items.forEach(product=>{
+      tagsFor(product.category).forEach(tag=>{
+        const key=tag.toLowerCase();
+        if(!seen.has(key))seen.set(key,tag);
+      });
+    });
+    return ['All',...Array.from(seen.values()).sort((a,b)=>a.localeCompare(b))];
+  },[items]);
+
+  useEffect(()=>{
+    if(!tabs.includes(active))setActive('All');
+  },[tabs,active]);
+
   const filtered=useMemo(()=>{
     if(active==='All')return items;
-    return items.filter(product=>(product.category||'').toLowerCase().includes(active.toLowerCase()));
+    return items.filter(product=>tagsFor(product.category).some(tag=>tag.toLowerCase()===active.toLowerCase()));
   },[items,active]);
 
   function moveSlide(id,count,amount){
@@ -107,8 +124,38 @@ export default function Home(){
               :<div className="image-placeholder">Photo coming soon</div>}
             <div className="pad">
               <div className="card-top">
-                <span className="pill">{product.status==='reserved'?'Reserved':product.category}</span>
-                <span className="price">{'$'+Number(product.price).toFixed(0)}</span>
+                <div className="pill-group">
+                  {product.status==='reserved'
+                    ?<span className="pill">Reserved</span>
+                    :tagsFor(product.category).map(tag=><span className="pill" key={tag}>{tag}</span>)}
+                </div>
+                <span className="price">{'
+              <h2>{product.name}</h2>
+              <p className="description">{product.description}</p>
+              <button className="btn" disabled={product.status!=='available'} onClick={()=>add(product)}>
+                {product.status==='reserved'?'Reserved':cart.some(c=>c.id===product.id)?'Added to cart':'Add to cart'}
+              </button>
+            </div>
+          </article>;
+        })}
+      </div>
+
+      {!filtered.length&&<div className="empty">
+        <div className="empty-icon">⌂</div>
+        <b>No items here yet.</b>
+        <span>Try another category.</span>
+      </div>}
+
+      {cart.length>0&&<div className="cart">
+        <div>
+          <b>{cart.length} item{cart.length>1?'s':''}</b> · {'$'+total.toFixed(0)}
+          <div className="cart-items">{cart.map(c=><button key={c.id} onClick={()=>remove(c.id)}>× {c.name}</button>)}</div>
+        </div>
+        <button className="whatsapp" onClick={send}>Send on WhatsApp</button>
+      </div>}
+    </div>
+  </main>;
+}+Number(product.price).toFixed(0)}</span>
               </div>
               <h2>{product.name}</h2>
               <p className="description">{product.description}</p>
